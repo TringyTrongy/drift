@@ -1,0 +1,5 @@
+# Local server logs, OS clutter
+*.log
+.DS_Store
+Thumbs.db
+node_modules/

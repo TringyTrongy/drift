@@ -1,0 +1,28 @@
+Drift
+Copyright (c) 2026 Viswes Vijayaragavan Sivakumar
+
+This work, including its source code, text and images, is licensed under the
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License
+(CC BY-NC-SA 4.0).
+
+The full legal code is at:
+https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+
+A human-readable summary is at:
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+In short, and without replacing the legal code, you may copy, share and adapt
+this work if you:
+
+  - give appropriate credit, link to the license, and say if you made changes
+    (Attribution);
+  - do not use it for commercial purposes (NonCommercial);
+  - distribute anything you build from it under this same license
+    (ShareAlike), so adaptations stay open.
+
+Third-party material is not covered by this license: the bundled typefaces in
+fonts/ keep their own licenses (osifont under the GNU LGPL 3 with font
+exception, Barlow Semi Condensed under the SIL Open Font License 1.1). See
+fonts/README.md.
+
+For commercial use or other permissions, open an issue on the repository to ask.

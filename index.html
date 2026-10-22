@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en" data-layout="wide">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Drift · ionic wind from the field up</title>
+    <meta
+      name="description"
+      content="A live ionic-wind solver in the browser: the field around a corona wire, the ions it sheds, the air they push, and the simulation's own readings plotted on Townsend's law."
+    />
+    <meta property="og:title" content="Drift · ionic wind from the field up" />
+    <meta
+      property="og:description"
+      content="Solve the field, drift the ions, push the air. Scrub voltage and gap to see the corona switch on and the current climb."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://tringytrongy.github.io/drift/media/drift-sheet.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#ddefd9" />
+    <link rel="icon" type="image/svg+xml" href="media/icon.svg" />
+    <link rel="preload" href="fonts/osifont.woff" as="font" type="font/woff" crossorigin />
+    <link rel="preload" href="fonts/barlow-semi-condensed-600.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="sheet" id="sheet">
+      <header class="head">
+        <div class="box box-project">
+          <span class="print">Project</span>
+          <h1><span class="title">Drift</span> <span class="tag">ionic wind from the field up</span></h1>
+        </div>
+        <div class="box box-date">
+          <span class="print">Date</span>
+          <span class="entry" id="date"></span>
+        </div>
+        <div class="box box-sheet">
+          <span class="print">Sheet</span>
+          <span class="entry">1 of 1</span>
+        </div>
+        <div class="box box-subject">
+          <span class="print">Subject</span>
+          <span class="entry">Wire-to-collector corona fan in section. Positive corona, air at 1 atm.</span>
+        </div>
+        <div class="box box-source">
+          <span class="print">Source</span>
+          <a class="entry" href="https://github.com/TringyTrongy/drift">github.com/TringyTrongy/drift</a>
+        </div>
+      </header>
+
+      <section class="fig1" aria-labelledby="fig1-cap">
+        <div class="stage" id="stage">
+          <canvas id="fig1" role="img" aria-label="Live section of the ionic fan: field lines, equipotentials, space charge and smoke tracers"></canvas>
+        </div>
+        <div class="caption" id="fig1-cap">
+          <p>
+            <b>Fig. 1</b> The channel in section, computing. Ink lines are field lines, which the ions follow; dashed graphite
+            lines are equipotentials; red shading is ion space charge; smoke tracers move at
+            <span id="slowmo">1/150</span> of real speed. Drag the collector to change the gap.
+          </p>
+          <fieldset class="layers">
+            <legend class="print">Show</legend>
+            <label><input type="checkbox" data-layer="lines" checked /> field lines</label>
+            <label><input type="checkbox" data-layer="equi" checked /> equipotentials</label>
+            <label><input type="checkbox" data-layer="charge" checked /> space charge</label>
+            <label><input type="checkbox" data-layer="smoke" checked /> smoke</label>
+            <label><input type="checkbox" data-layer="speed" /> speed</label>
+          </fieldset>
+        </div>
+      </section>
+
+      <aside class="margin" id="controls" aria-label="Settings and readings">
+        <div class="group">
+        <h2 class="print">Settings</h2>
+
+        <div class="setting">
+          <div class="setting-head">
+            <label for="volts">Voltage on the wire</label>
+            <output class="big" id="volts-out" for="volts">9.0 kV</output>
+          </div>
+          <div class="scale" id="volts-scale">
+            <input type="range" id="volts" min="0" max="14" step="0.1" value="9" />
+            <span class="mark onset" id="onset-mark" aria-hidden="true">V<sub>0</sub></span>
+            <span class="spark" id="spark-zone" aria-hidden="true"></span>
+            <span class="ticks" aria-hidden="true"><i>0</i><i>2</i><i>4</i><i>6</i><i>8</i><i>10</i><i>12</i><i>14</i></span>
+          </div>
+        </div>
+
+        <div class="setting">
+          <div class="setting-head">
+            <label for="gap">Gap, wire to collector</label>
+            <output class="big" id="gap-out" for="gap">5.0 mm</output>
+          </div>
+          <div class="scale">
+            <input type="range" id="gap" min="2" max="10" step="0.1" value="5" />
+            <span class="ticks" aria-hidden="true"><i>2</i><i>4</i><i>6</i><i>8</i><i>10</i></span>
+          </div>
+        </div>
+
+        <fieldset class="setting views">
+          <legend>Collector: <span id="view-name">twin plates</span></legend>
+          <div class="view-row">
+            <label class="view"><input type="radio" name="view" value="A" checked /><svg viewBox="0 0 80 60" aria-hidden="true"><use href="#view-a" /></svg><span>A</span></label>
+            <label class="view"><input type="radio" name="view" value="B" /><svg viewBox="0 0 80 60" aria-hidden="true"><use href="#view-b" /></svg><span>B</span></label>
+            <label class="view"><input type="radio" name="view" value="C" /><svg viewBox="0 0 80 60" aria-hidden="true"><use href="#view-c" /></svg><span>C</span></label>
+          </div>
+        </fieldset>
+
+        <p class="setting wire">
+          Wire radius <span class="scrub" id="rw" tabindex="0" role="slider" aria-label="Wire radius" aria-valuemin="10" aria-valuemax="100" aria-valuenow="25">25</span> µm,
+          length <span class="scrub" id="len" tabindex="0" role="slider" aria-label="Electrode length" aria-valuemin="10" aria-valuemax="200" aria-valuenow="40">40</span> mm
+        </p>
+
+        </div>
+        <div class="group">
+        <h2 class="print">Readings</h2>
+        <dl class="readings" id="readings" aria-live="off">
+          <div><dt><span>Onset V<sub>0</sub></span></dt><dd id="r-onset">–</dd></div>
+          <div><dt><span>Surface field</span></dt><dd id="r-field">–</dd></div>
+          <div><dt><span>Current I</span></dt><dd id="r-current">–</dd></div>
+          <div><dt><span>Power</span></dt><dd id="r-power">–</dd></div>
+          <div><dt><span>Wind, bulk</span></dt><dd id="r-wind">–</dd></div>
+          <div><dt><span>Wind, peak</span></dt><dd id="r-peak">–</dd></div>
+          <div><dt><span>Flow</span></dt><dd id="r-flow">–</dd></div>
+          <div><dt><span>Air time</span></dt><dd id="r-time">–</dd></div>
+        </dl>
+        <p class="status" id="status" aria-live="polite">settling</p>
+        <div class="actions">
+          <button type="button" id="sweep">Sweep</button>
+          <button type="button" id="log-now">Log</button>
+          <button type="button" id="reset">Still air</button>
+          <button type="button" id="pause" aria-pressed="false">Pause</button>
+        </div>
+        </div>
+      </aside>
+
+      <section class="fig2" aria-labelledby="fig2-cap">
+        <div class="plot">
+          <canvas id="plot-iv" role="img" aria-label="Current against voltage: model curves and logged readings"></canvas>
+        </div>
+        <div class="plot">
+          <canvas id="plot-ui" role="img" aria-label="Wind speed against current: ideal momentum curves and logged readings"></canvas>
+        </div>
+        <div class="caption" id="fig2-cap">
+          <p>
+            <b>Fig. 2</b> Readings on the model. <b>(a)</b> Current against voltage. Curves are Townsend's law
+            I = C V (V − V<sub>0</sub>) with no fitted constants: V<sub>0</sub> from Peek's field and this geometry's
+            capacitance, C from the ion transit time. The solid curve is the gap you are at; dashed curves are the other
+            whole-millimetre gaps. <b>(b)</b> Bulk wind speed against current. The solid curve is the lossless momentum limit for
+            your gap and the dashed curves are the same limit at the other gaps; the dotted line is a square-root fit
+            through the readings, the one fitted line on this figure. Ink dots are the simulation's own steady readings,
+            the open circle is the reading still settling, and red crosses are bench data you drop in.
+          </p>
+          <p class="verdict" id="verdict"></p>
+        </div>
+      </section>
+
+      <section class="log" aria-labelledby="log-title">
+        <div class="log-table">
+          <h2 class="print" id="log-title">Readings log</h2>
+          <table>
+            <thead>
+              <tr><th scope="col">No.</th><th scope="col">V, <span class="unit">kV</span></th><th scope="col">d, <span class="unit">mm</span></th><th scope="col">View</th><th scope="col">I, <span class="unit">µA</span></th><th scope="col"><span class="unit">u</span>, <span class="unit">m/s</span></th><th scope="col">I / model</th></tr>
+            </thead>
+            <tbody id="log-body"></tbody>
+          </table>
+          <p class="empty" id="log-empty">No readings yet. Hold still for a few seconds and one inks in, or run a sweep.</p>
+          <div class="actions">
+            <button type="button" id="clear-log">Clear log</button>
+            <button type="button" id="export-log">Copy as CSV</button>
+          </div>
+        </div>
+        <div class="bench">
+          <h2 class="print">Bench data</h2>
+          <p>
+            Measured a real ionic fan, a Ventiva-style module or your own wire and plates? Drop the CSV here or paste it.
+            Columns: voltage in kV, current in µA, and optionally wind speed in m/s and gap in mm.
+          </p>
+          <label class="drop" id="drop">
+            <span>Drop a .csv here, or choose a file</span>
+            <input type="file" id="bench-file" accept=".csv,.txt,text/csv,text/plain" />
+          </label>
+          <label class="paste-label" for="bench-paste">or paste rows</label>
+          <textarea id="bench-paste" rows="4" spellcheck="false" placeholder="V_kV, I_uA, u_ms, d_mm&#10;6.0, 18, 1.1, 5&#10;8.0, 61, 1.9, 5"></textarea>
+          <div class="actions">
+            <button type="button" id="bench-plot">Plot rows</button>
+            <button type="button" id="bench-clear">Remove bench data</button>
+          </div>
+          <p class="bench-fit" id="bench-fit" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section class="notes" aria-labelledby="notes-title">
+        <h2 class="print" id="notes-title">Method</h2>
+        <div class="note-body">
+          <p>
+            <b>Field.</b> Potential and space charge obey Poisson's equation, ∇²φ = −ρ/ε<sub>0</sub>, on a 240 × 120 grid of
+            0.1 mm cells, solved by conjugate gradients with a multigrid preconditioner. The channel walls are insulating,
+            the collector is grounded, the wire is held at V.
+          </p>
+          <p>
+            <b>The wire.</b> A 25 µm wire is a quarter of a cell, so it lives inside one cell. That cell's value is the
+            potential at Peaceman's equivalent radius r<sub>0</sub> = e<sup>−π/2</sup> h, and the line charge follows from
+            the log profile between r<sub>0</sub> and the real surface. That gives the wire's true surface field without
+            resolving it.
+          </p>
+          <p>
+            <b>Corona.</b> Peek's law sets the field at which air at the surface ionises:
+            E<sub>p</sub> = 3.1 MV/m · (1 + 0.0308 / √r<sub>w</sub>), with r<sub>w</sub> in metres. Below it, nothing flows. Above it, Kaptzov's
+            hypothesis holds the surface field at E<sub>p</sub> and the wire sheds exactly the ion current that keeps it
+            there. The solver finds that current directly, using Green's reciprocity for the charge the ions induce on
+            the wire.
+          </p>
+          <p>
+            <b>Ions.</b> Positive ions drift at μE with μ = 2.0 × 10<sup>−4</sup> m²/(V·s), hundreds of times faster than
+            the wind, so the wind's effect on them is ignored. Because they only ever move downhill in potential, one
+            sweep through the cells in order of falling φ solves the steady charge balance exactly.
+          </p>
+          <p>
+            <b>Air.</b> Incompressible Navier–Stokes on a 0.2 mm staggered grid, pushed by the body force ρE. The inlet
+            draws from still air at zero total pressure; the outlet is open.
+          </p>
+          <p>
+            <b>Fig. 2's model.</b> Townsend's law with no fitted constants. The excess charge the ions must carry is
+            C′(V − V<sub>0</sub>), and it crosses the shortest ion path ℓ in about ℓ²/(μV), so C ≈ μC′/ℓ². The wind
+            limit is lossless momentum: the ions push the air with I′ℓ/μ per metre, which over channel height w gives
+            u = √(2I′ℓ / (ρμw)).
+          </p>
+          <p>
+            <b>Limits.</b> It is a two-dimensional section: currents are per metre of wire, scaled by the electrode length
+            you set. One ion species, no diffusion, no heating, smooth clean wire, dry air. Past the red hatched zone on
+            the voltage scale (mean field about 2.5 kV/mm along the shortest path, a rough guide) a real gap would
+            spark over; the solver keeps going because it does not model streamers.
+          </p>
+        </div>
+      </section>
+
+      <footer class="foot">
+        <div class="box"><span class="print">Recorded by</span><span class="entry">the solver, frame by frame</span></div>
+        <div class="box"><span class="print">Witnessed and understood by</span><span class="entry">you</span></div>
+        <p class="colophon">
+          Drift is a sibling of <a href="https://github.com/TringyTrongy/tropism">Tropism</a>. Lettering in
+          <a href="https://github.com/hikikomori82/osifont">osifont</a> (ISO 3098), print in Barlow Semi Condensed.
+          Licensed CC BY-NC-SA 4.0.
+        </p>
+      </footer>
+    </main>
+
+    <svg width="0" height="0" class="defs" aria-hidden="true">
+      <defs>
+        <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="5" stroke="currentColor" stroke-width="1.2" />
+        </pattern>
+        <g id="view-a">
+          <circle cx="16" cy="30" r="2.2" fill="currentColor" />
+          <rect x="34" y="14" width="38" height="5" fill="url(#hatch)" stroke="currentColor" stroke-width="1.2" />
+          <rect x="34" y="41" width="38" height="5" fill="url(#hatch)" stroke="currentColor" stroke-width="1.2" />
+        </g>
+        <g id="view-b">
+          <circle cx="16" cy="30" r="2.2" fill="currentColor" />
+          <rect x="40" y="6" width="6" height="6" fill="url(#hatch)" stroke="currentColor" stroke-width="1.2" />
+          <rect x="40" y="19" width="6" height="6" fill="url(#hatch)" stroke="currentColor" stroke-width="1.2" />
+          <rect x="40" y="32" width="6" height="6" fill="url(#hatch)" stroke="currentColor" stroke-width="1.2" />
+          <rect x="40" y="45" width="6" height="6" fill="url(#hatch)" stroke="currentColor" stroke-width="1.2" />
+        </g>
+        <g id="view-c">
+          <circle cx="12" cy="30" r="2.2" fill="currentColor" />
+          <path d="M30 30 C 32 22, 44 21, 58 24 C 66 26, 72 28.5, 76 30 C 72 31.5, 66 34, 58 36 C 44 39, 32 38, 30 30 Z" fill="url(#hatch)" stroke="currentColor" stroke-width="1.2" />
+        </g>
+      </defs>
+    </svg>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

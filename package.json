@@ -1,0 +1,10 @@
+{
+  "name": "drift",
+  "private": true,
+  "type": "module",
+  "description": "Ionic wind from the field up: a coupled corona, ion drift and airflow solver in the browser.",
+  "scripts": {
+    "serve": "node tools/serve.mjs",
+    "test": "node --test tests/*.test.mjs"
+  }
+}
